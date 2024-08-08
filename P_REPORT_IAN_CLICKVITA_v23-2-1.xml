@@ -1,0 +1,1171 @@
+<channel version="4.0.0">
+  <id>31d07a79-84c3-4303-a881-dc460f0dcb41</id>
+  <nextMetaDataId>13</nextMetaDataId>
+  <name>P_REPORT_IAN_CLICKVITA_v23-2-1</name>
+  <description>Este canal IAN somente deve ser utilizado em conjunto com o canal de laudos D_REPORT_CLICKVITA_v23-1-0 (versão 23.1.0 ou superior).&#xd;
+&#xd;
+Para a configuração do canal é necessário criar a tabela abaixo no banco de dados do PACS Aurora:&#xd;
+CREATE TABLE integ_ian_clickvita (&#xd;
+  na_datetimeintegrated VARCHAR(14) NOT NULL,&#xd;
+  studyinstanceuid VARCHAR(64) PRIMARY KEY,&#xd;
+  accessionnumber VARCHAR(16),&#xd;
+  patientid VARCHAR(64),&#xd;
+  status CHAR(1),&#xd;
+  description VARCHAR(255)&#xd;
+);</description>
+  <revision>2</revision>
+  <sourceConnector version="4.0.0">
+    <metaDataId>0</metaDataId>
+    <name>sourceConnector</name>
+    <properties class="com.mirth.connect.connectors.jdbc.DatabaseReceiverProperties" version="4.0.0">
+      <pluginProperties/>
+      <pollConnectorProperties version="4.0.0">
+        <pollingType>INTERVAL</pollingType>
+        <pollOnStart>true</pollOnStart>
+        <pollingFrequency>60000</pollingFrequency>
+        <pollingHour>0</pollingHour>
+        <pollingMinute>0</pollingMinute>
+        <cronJobs/>
+        <pollConnectorPropertiesAdvanced>
+          <weekly>true</weekly>
+          <inactiveDays>
+            <boolean>false</boolean>
+            <boolean>false</boolean>
+            <boolean>false</boolean>
+            <boolean>false</boolean>
+            <boolean>false</boolean>
+            <boolean>false</boolean>
+            <boolean>false</boolean>
+            <boolean>false</boolean>
+          </inactiveDays>
+          <dayOfMonth>1</dayOfMonth>
+          <allDay>true</allDay>
+          <startingHour>8</startingHour>
+          <startingMinute>0</startingMinute>
+          <endingHour>17</endingHour>
+          <endingMinute>0</endingMinute>
+        </pollConnectorPropertiesAdvanced>
+      </pollConnectorProperties>
+      <sourceConnectorProperties version="4.0.0">
+        <responseVariable>None</responseVariable>
+        <respondAfterProcessing>true</respondAfterProcessing>
+        <processBatch>false</processBatch>
+        <firstResponse>false</firstResponse>
+        <processingThreads>1</processingThreads>
+        <resourceIds class="linked-hash-map">
+          <entry>
+            <string>Default Resource</string>
+            <string>[Default Resource]</string>
+          </entry>
+        </resourceIds>
+        <queueBufferSize>1000</queueBufferSize>
+      </sourceConnectorProperties>
+      <driver>org.postgresql.Driver</driver>
+      <url>jdbc:postgresql://host:port/dbname</url>
+      <username>nao-usa</username>
+      <password>nao-usa</password>
+      <select>var channelPegman = channelName + &apos; on Source&apos;;
+
+var topLimit = &apos;&apos;;
+
+var endLimit = &apos;&apos;;
+var rowLimit = &apos;&apos;;
+if ($cfg(&apos;AURORA_DB_DRIVER&apos;) == &apos;net.sourceforge.jtds.jdbc.Driver&apos;) {topLimit = &apos; TOP 25 &apos;;}
+if ($cfg(&apos;AURORA_DB_DRIVER&apos;) == &apos;org.postgresql.Driver&apos;) {endLimit = &apos;LIMIT 25&apos;;}
+if ($cfg(&apos;AURORA_DB_DRIVER&apos;) == &apos;oracle.jdbc.driver.OracleDriver&apos;) {rowLimit = &apos;AND ROWNUM &lt;= 25&apos;;}
+
+var withNoLock = &apos; &apos;; // table hint para banco SQL Server (SSD-296618)
+if ($cfg(&apos;AURORA_DB_DRIVER&apos;) == &apos;net.sourceforge.jtds.jdbc.Driver&apos;) {withNoLock = &apos; WITH (NOLOCK) &apos;;}
+
+var cr = &apos;\r&apos;;
+var SQL = new java.lang.StringBuffer();
+SQL.append(&apos;SELECT&apos; + topLimit + cr);
+SQL.append(&apos;dicomstudies.studydate,&apos; + cr);
+SQL.append(&apos;dicomstudies.accessionn,&apos; + cr);
+SQL.append(&apos;dicomstudies.studymodal,&apos; + cr);
+SQL.append(&apos;worklist.no_studyinstanceuid,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_description,&apos; + cr);
+SQL.append(&apos;worklistintegration.co_requesterid,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_requestername,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_requesteremail,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_requestercrm,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_requesteruf,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_requesterphone,&apos; + cr);
+SQL.append(&apos;worklistintegration.co_performingid,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_performingname,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_performingemail,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_performingcrm,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_performinguf,&apos; + cr);
+SQL.append(&apos;worklistintegration.co_patientid,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_patientname,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_patientsex,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_patientbirthday,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_patientrg,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_patientcpf,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_patientphone,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_patientemail,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_requestingservice,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_insuranceplan,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_clickvitawebprotocol,&apos; + cr);
+SQL.append(&apos;worklistintegration.na_clickvitawebpassword&apos; + cr);
+SQL.append(&apos;FROM dicomstudies&apos; + withNoLock + cr);
+SQL.append(&apos;INNER JOIN worklistintegration&apos; + withNoLock + &apos;ON worklistintegration.na_accessionnumber = dicomstudies.accessionn&apos; + cr);
+SQL.append(&apos;LEFT JOIN worklist&apos; + withNoLock + &apos;ON worklist.no_accessionnumber = dicomstudies.accessionn&apos; + cr);
+SQL.append(&apos;LEFT JOIN integ_ian_clickvita&apos; + withNoLock + &apos;ON integ_ian_clickvita.studyinstanceuid = worklist.no_studyinstanceuid&apos; + cr);
+SQL.append(&apos;WHERE 1 = 1 &apos; + cr);
+SQL.append(&apos;AND worklistintegration.co_worklistintegration = (SELECT MAX(co_worklistintegration) FROM worklistintegration WHERE worklistintegration.na_accessionnumber = dicomstudies.accessionn)&apos; + cr);
+SQL.append(&apos;AND worklistintegration.na_clickvitawebprotocol IS NOT NULL&apos; + cr);
+SQL.append(&apos;AND worklistintegration.na_clickvitawebpassword IS NOT NULL&apos; + cr);
+SQL.append(&apos;AND integ_ian_clickvita.studyinstanceuid IS NULL&apos; + cr);
+SQL.append(&apos;AND dicomstudies.accessionn IS NOT NULL&apos; + cr);
+// SQL.append(&quot;AND dicomstudies.accessionn = &apos;00104837001&apos;&quot; + cr); // descomente essa linha para realizar testes especificos de integracao
+SQL.append(&apos;AND dicomstudies.nu_statusreport NOT IN (1, 7)&apos; + cr);
+SQL.append(&apos;AND dicomstudies.fl_processed = 1&apos; + cr);
+SQL.append(&apos;AND dicomstudies.studydate &gt; ?&apos; + cr);
+SQL.append(&quot;AND dicomstudies.studymodal IN (&apos;&quot; + $cfg(&apos;CV_IAN_LIST_MODALITY&apos;).replaceAll(&apos; &apos;, &apos;&apos;).replaceAll(&quot;,&quot;, &quot;&apos;,&apos;&quot;) + &quot;&apos;)&quot; + cr);
+SQL.append(endLimit + rowLimit + cr); //banco Oracle ou Postgres adiciona limite no final da query
+
+var params = new java.util.ArrayList();
+params.add($cfg(&apos;CV_IAN_INIT_DATE&apos;));
+
+var dbConn;
+try {
+	var dbConn = DatabaseConnectionFactory.createDatabaseConnection($cfg(&apos;AURORA_DB_DRIVER&apos;), $cfg(&apos;AURORA_DB_URL&apos;), $cfg(&apos;AURORA_DB_USER&apos;), $cfg(&apos;AURORA_DB_PWD&apos;));
+	var resultSet = dbConn.executeCachedQuery(SQL, params);
+	return resultSet;
+} catch (exception) {
+	logger.error(&apos;[&apos; + channelPegman + &apos;] Erro de conexão/consulta com banco de dados do Aurora&apos;);
+	throw exception;
+} finally {
+	if (dbConn) {
+		dbConn.close();
+	}
+}</select>
+      <update>// This update script will be executed once after all results have been processed.
+var dbConn;
+
+try {
+	dbConn = DatabaseConnectionFactory.createDatabaseConnection(&apos;&apos;,&apos;&apos;,&apos;&apos;,&apos;&apos;);
+
+} finally {
+	if (dbConn) { 
+		dbConn.close();
+	}
+}</update>
+      <useScript>true</useScript>
+      <aggregateResults>false</aggregateResults>
+      <cacheResults>true</cacheResults>
+      <keepConnectionOpen>true</keepConnectionOpen>
+      <updateMode>1</updateMode>
+      <retryCount>3</retryCount>
+      <retryInterval>10000</retryInterval>
+      <fetchSize>1000</fetchSize>
+      <encoding>DEFAULT_ENCODING</encoding>
+    </properties>
+    <transformer version="4.0.0">
+      <elements>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>studyinsta</name>
+          <sequenceNumber>0</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>studyinsta</variable>
+          <mapping>msg[&apos;no_studyinstanceuid&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>studydate</name>
+          <sequenceNumber>1</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>studydate</variable>
+          <mapping>msg[&apos;studydate&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>accessionn</name>
+          <sequenceNumber>2</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>accessionn</variable>
+          <mapping>msg[&apos;accessionn&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>studymodal</name>
+          <sequenceNumber>3</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>studymodal</variable>
+          <mapping>msg[&apos;studymodal&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_description</name>
+          <sequenceNumber>4</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_description</variable>
+          <mapping>msg[&apos;na_description&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>co_requesterid</name>
+          <sequenceNumber>5</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>co_requesterid</variable>
+          <mapping>msg[&apos;co_requesterid&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_requestername</name>
+          <sequenceNumber>6</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_requestername</variable>
+          <mapping>msg[&apos;na_requestername&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_requesteremail</name>
+          <sequenceNumber>7</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_requesteremail</variable>
+          <mapping>msg[&apos;na_requesteremail&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_requestercrm</name>
+          <sequenceNumber>8</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_requestercrm</variable>
+          <mapping>msg[&apos;na_requestercrm&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_requesteruf</name>
+          <sequenceNumber>9</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_requesteruf</variable>
+          <mapping>msg[&apos;na_requesteruf&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_requesterphone</name>
+          <sequenceNumber>10</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_requesterphone</variable>
+          <mapping>msg[&apos;na_requesterphone&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>co_performingid</name>
+          <sequenceNumber>11</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>co_performingid</variable>
+          <mapping>msg[&apos;co_performingid&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_performingname</name>
+          <sequenceNumber>12</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_performingname</variable>
+          <mapping>msg[&apos;na_performingname&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_performingemail</name>
+          <sequenceNumber>13</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_performingemail</variable>
+          <mapping>msg[&apos;na_performingemail&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_performingcrm</name>
+          <sequenceNumber>14</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_performingcrm</variable>
+          <mapping>msg[&apos;na_performingcrm&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_performinguf</name>
+          <sequenceNumber>15</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_performinguf</variable>
+          <mapping>msg[&apos;na_performinguf&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>co_patientid</name>
+          <sequenceNumber>16</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>co_patientid</variable>
+          <mapping>msg[&apos;co_patientid&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_patientname</name>
+          <sequenceNumber>17</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_patientname</variable>
+          <mapping>msg[&apos;na_patientname&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_patientsex</name>
+          <sequenceNumber>18</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_patientsex</variable>
+          <mapping>msg[&apos;na_patientsex&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_patientbirthday</name>
+          <sequenceNumber>19</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_patientbirthday</variable>
+          <mapping>msg[&apos;na_patientbirthday&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_patientrg</name>
+          <sequenceNumber>20</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_patientrg</variable>
+          <mapping>msg[&apos;na_patientrg&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_patientcpf</name>
+          <sequenceNumber>21</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_patientcpf</variable>
+          <mapping>msg[&apos;na_patientcpf&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_patientphone</name>
+          <sequenceNumber>22</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_patientphone</variable>
+          <mapping>msg[&apos;na_patientphone&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_patientemail</name>
+          <sequenceNumber>23</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_patientemail</variable>
+          <mapping>msg[&apos;na_patientemail&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_requestingservice</name>
+          <sequenceNumber>24</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_requestingservice</variable>
+          <mapping>msg[&apos;na_requestingservice&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_insuranceplan</name>
+          <sequenceNumber>25</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_insuranceplan</variable>
+          <mapping>msg[&apos;na_insuranceplan&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_clickvitawebprotocol</name>
+          <sequenceNumber>26</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_clickvitawebprotocol</variable>
+          <mapping>msg[&apos;na_clickvitawebprotocol&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.mapper.MapperStep version="4.0.0">
+          <name>na_clickvitawebpassword</name>
+          <sequenceNumber>27</sequenceNumber>
+          <enabled>true</enabled>
+          <variable>na_clickvitawebpassword</variable>
+          <mapping>msg[&apos;na_clickvitawebpassword&apos;].toString()</mapping>
+          <defaultValue></defaultValue>
+          <replacements/>
+          <scope>CHANNEL</scope>
+        </com.mirth.connect.plugins.mapper.MapperStep>
+        <com.mirth.connect.plugins.javascriptstep.JavaScriptStep version="4.0.0">
+          <name>JSMapper</name>
+          <sequenceNumber>28</sequenceNumber>
+          <enabled>true</enabled>
+          <script>if(msg[&apos;studydate&apos;].toString().trim() != &apos;&apos;){
+	msg[&apos;studydate&apos;] = DateUtil.convertDate(&apos;yyyyMMdd&apos;, &apos;dd/MM/yyyy&apos;, msg[&apos;studydate&apos;].toString());
+}
+
+if(msg[&apos;na_patientbirthday&apos;].toString().trim() != &apos;&apos;){
+	msg[&apos;na_patientbirthday&apos;] = DateUtil.convertDate(&apos;yyyyMMdd&apos;, &apos;dd/MM/yyyy&apos;, msg[&apos;na_patientbirthday&apos;].toString());
+}
+
+$c(&apos;protocolidentifier&apos;, $cfg(&apos;CV_PREFIX&apos;) + msg[&apos;na_clickvitawebprotocol&apos;]);</script>
+        </com.mirth.connect.plugins.javascriptstep.JavaScriptStep>
+      </elements>
+      <inboundTemplate encoding="base64">PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8cmVzdWx0Lz4NCg==</inboundTemplate>
+      <outboundTemplate encoding="base64"></outboundTemplate>
+      <inboundDataType>XML</inboundDataType>
+      <outboundDataType>XML</outboundDataType>
+      <inboundProperties class="com.mirth.connect.plugins.datatypes.xml.XMLDataTypeProperties" version="4.0.0">
+        <serializationProperties class="com.mirth.connect.plugins.datatypes.xml.XMLSerializationProperties" version="4.0.0">
+          <stripNamespaces>true</stripNamespaces>
+        </serializationProperties>
+        <batchProperties class="com.mirth.connect.plugins.datatypes.xml.XMLBatchProperties" version="4.0.0">
+          <splitType>Element_Name</splitType>
+          <elementName></elementName>
+          <level>1</level>
+          <query></query>
+          <batchScript></batchScript>
+        </batchProperties>
+      </inboundProperties>
+      <outboundProperties class="com.mirth.connect.plugins.datatypes.xml.XMLDataTypeProperties" version="4.0.0">
+        <serializationProperties class="com.mirth.connect.plugins.datatypes.xml.XMLSerializationProperties" version="4.0.0">
+          <stripNamespaces>true</stripNamespaces>
+        </serializationProperties>
+        <batchProperties class="com.mirth.connect.plugins.datatypes.xml.XMLBatchProperties" version="4.0.0">
+          <splitType>Element_Name</splitType>
+          <elementName></elementName>
+          <level>1</level>
+          <query></query>
+          <batchScript></batchScript>
+        </batchProperties>
+      </outboundProperties>
+    </transformer>
+    <filter version="4.0.0">
+      <elements/>
+    </filter>
+    <transportName>Database Reader</transportName>
+    <mode>SOURCE</mode>
+    <enabled>true</enabled>
+    <waitForPrevious>true</waitForPrevious>
+  </sourceConnector>
+  <destinationConnectors>
+    <connector version="4.0.0">
+      <metaDataId>9</metaDataId>
+      <name>GetReport</name>
+      <properties class="com.mirth.connect.connectors.js.JavaScriptDispatcherProperties" version="4.0.0">
+        <pluginProperties/>
+        <destinationConnectorProperties version="4.0.0">
+          <queueEnabled>false</queueEnabled>
+          <sendFirst>false</sendFirst>
+          <retryIntervalMillis>10000</retryIntervalMillis>
+          <regenerateTemplate>false</regenerateTemplate>
+          <retryCount>0</retryCount>
+          <rotate>false</rotate>
+          <includeFilterTransformer>false</includeFilterTransformer>
+          <threadCount>1</threadCount>
+          <threadAssignmentVariable></threadAssignmentVariable>
+          <validateResponse>false</validateResponse>
+          <resourceIds class="linked-hash-map">
+            <entry>
+              <string>Default Resource</string>
+              <string>[Default Resource]</string>
+            </entry>
+          </resourceIds>
+          <queueBufferSize>1000</queueBufferSize>
+          <reattachAttachments>true</reattachAttachments>
+        </destinationConnectorProperties>
+        <script>
+var channelPegman = channelName + &apos; on &apos; + connectorMessage.getConnectorName();
+
+var templateFile = $gc(&apos;templatePath&apos;);
+try {
+    var contents = FileUtil.readBytes(templateFile);
+    var templateEncodedContent = Packages.org.apache.commons.codec.binary.Base64.encodeBase64String(contents);
+    $c(&apos;encodedContent&apos;, templateEncodedContent);
+} catch (exception) {
+    logger.error(&apos;[&apos; + channelPegman + &apos;] Erro ao acessar/ler arquivo de template: &apos; + exception);
+    throw exception;
+}
+</script>
+      </properties>
+      <transformer version="4.0.0">
+        <elements/>
+        <inboundTemplate encoding="base64">PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8cmVzdWx0Lz4NCg==</inboundTemplate>
+        <inboundDataType>XML</inboundDataType>
+        <outboundDataType>XML</outboundDataType>
+        <inboundProperties class="com.mirth.connect.plugins.datatypes.xml.XMLDataTypeProperties" version="4.0.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.xml.XMLSerializationProperties" version="4.0.0">
+            <stripNamespaces>false</stripNamespaces>
+          </serializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.xml.XMLBatchProperties" version="4.0.0">
+            <splitType>Element_Name</splitType>
+            <elementName></elementName>
+            <level>1</level>
+            <query></query>
+            <batchScript></batchScript>
+          </batchProperties>
+        </inboundProperties>
+        <outboundProperties class="com.mirth.connect.plugins.datatypes.xml.XMLDataTypeProperties" version="4.0.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.xml.XMLSerializationProperties" version="4.0.0">
+            <stripNamespaces>false</stripNamespaces>
+          </serializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.xml.XMLBatchProperties" version="4.0.0">
+            <splitType>Element_Name</splitType>
+            <elementName></elementName>
+            <level>1</level>
+            <query></query>
+            <batchScript></batchScript>
+          </batchProperties>
+        </outboundProperties>
+      </transformer>
+      <responseTransformer version="4.0.0">
+        <elements/>
+        <inboundDataType>XML</inboundDataType>
+        <outboundDataType>XML</outboundDataType>
+        <inboundProperties class="com.mirth.connect.plugins.datatypes.xml.XMLDataTypeProperties" version="4.0.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.xml.XMLSerializationProperties" version="4.0.0">
+            <stripNamespaces>false</stripNamespaces>
+          </serializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.xml.XMLBatchProperties" version="4.0.0">
+            <splitType>Element_Name</splitType>
+            <elementName></elementName>
+            <level>1</level>
+            <query></query>
+            <batchScript></batchScript>
+          </batchProperties>
+        </inboundProperties>
+        <outboundProperties class="com.mirth.connect.plugins.datatypes.xml.XMLDataTypeProperties" version="4.0.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.xml.XMLSerializationProperties" version="4.0.0">
+            <stripNamespaces>false</stripNamespaces>
+          </serializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.xml.XMLBatchProperties" version="4.0.0">
+            <splitType>Element_Name</splitType>
+            <elementName></elementName>
+            <level>1</level>
+            <query></query>
+            <batchScript></batchScript>
+          </batchProperties>
+        </outboundProperties>
+      </responseTransformer>
+      <filter version="4.0.0">
+        <elements/>
+      </filter>
+      <transportName>JavaScript Writer</transportName>
+      <mode>DESTINATION</mode>
+      <enabled>true</enabled>
+      <waitForPrevious>true</waitForPrevious>
+    </connector>
+    <connector version="4.0.0">
+      <metaDataId>10</metaDataId>
+      <name>Send Message</name>
+      <properties class="com.mirth.connect.connectors.js.JavaScriptDispatcherProperties" version="4.0.0">
+        <pluginProperties/>
+        <destinationConnectorProperties version="4.0.0">
+          <queueEnabled>false</queueEnabled>
+          <sendFirst>false</sendFirst>
+          <retryIntervalMillis>10000</retryIntervalMillis>
+          <regenerateTemplate>false</regenerateTemplate>
+          <retryCount>0</retryCount>
+          <rotate>false</rotate>
+          <includeFilterTransformer>false</includeFilterTransformer>
+          <threadCount>1</threadCount>
+          <validateResponse>false</validateResponse>
+          <resourceIds class="linked-hash-map">
+            <entry>
+              <string>Default Resource</string>
+              <string>[Default Resource]</string>
+            </entry>
+          </resourceIds>
+          <queueBufferSize>1000</queueBufferSize>
+          <reattachAttachments>true</reattachAttachments>
+        </destinationConnectorProperties>
+        <script>var channelPegman = channelName + &apos; on &apos; + connectorMessage.getConnectorName();
+
+try {
+    var urlService = new java.net.URL($cfg(&apos;CV_HTTP_PROTOCOL&apos;), $cfg(&apos;CV_HOST_ADDRESS&apos;), $cfg(&apos;CV_RESOURCE_PATH&apos;));
+    var basicHttpParams = new Packages.org.apache.http.params.BasicHttpParams();
+    Packages.org.apache.http.params.HttpConnectionParams.setConnectionTimeout(basicHttpParams, 30000);
+    Packages.org.apache.http.params.HttpConnectionParams.setSoTimeout(basicHttpParams, 30000);
+    var httpClient = new Packages.org.apache.http.impl.client.DefaultHttpClient(basicHttpParams);
+
+    var requestEntity = new Packages.org.apache.http.entity.BasicHttpEntity();
+    requestEntity.setContentType(&apos;application/xml&apos;);
+    requestEntity.setContentEncoding(&apos;UTF-8&apos;);
+    requestEntity.setContent(new java.io.ByteArrayInputStream(connectorMessage.getEncodedData().getBytes(&apos;UTF-8&apos;)));
+
+    var request = new Packages.org.apache.http.client.methods.HttpPost(urlService);
+    request.addHeader(&apos;Content-Type&apos;, &apos;application/xml&apos;);
+    request.setEntity(requestEntity);
+
+    var httpResponse = httpClient.execute(request);
+    var httpResponseCode = new java.lang.Integer(httpResponse.getStatusLine().getStatusCode());
+    var httpResponseContent = getHttpResponseContent(httpResponse);
+
+    if (httpResponseContent == &apos;Received&apos;) {
+        updateControl(&apos;S&apos;, &apos;Successo&apos;);
+        return;
+    } else {
+        updateControl(&apos;N&apos;, &apos;Erro HTTP &apos; + httpResponseCode);
+    }
+} catch(exception) {
+    logger.error(&apos;[&apos; + channelPegman + &apos;] Erro ao enviar mensagem para o Clickvita: &apos; + exception);
+    throw exception;
+}
+
+
+function getHttpResponseContent(httpResponse) {
+    if(httpResponse != null) {
+        var content = &apos;&apos;;
+        var inputStream = httpResponse.getEntity().getContent();
+        var scanner = new java.util.Scanner(inputStream).useDelimiter(&apos;\\A&apos;);
+        if(scanner.hasNext()){
+            content = scanner.next();
+        }
+        scanner.close();
+        return content;
+    }
+    return &apos;&apos;;
+}
+
+
+function updateControl(status, description) {
+    var cr = &apos;\r&apos;;
+    var SQL = new java.lang.StringBuffer();
+    SQL.append(&apos;INSERT INTO integ_ian_clickvita&apos; + cr);
+    SQL.append(&apos;(na_datetimeintegrated, studyinstanceuid, accessionnumber, patientid, status, description)&apos; + cr);
+    SQL.append(&apos;VALUES (?,?,?,?,?,?)&apos;);
+
+    var dbConn;
+    try {
+        dbConn = DatabaseConnectionFactory.createDatabaseConnection($cfg(&apos;AURORA_DB_DRIVER&apos;), $cfg(&apos;AURORA_DB_URL&apos;), $cfg(&apos;AURORA_DB_USER&apos;), $cfg(&apos;AURORA_DB_PWD&apos;));
+        var ps = dbConn.getConnection().prepareStatement(SQL);
+        ps.setString(1, DateUtil.getCurrentDate(&apos;yyyyMMddHHmmss&apos;));
+        ps.setString(2, $c(&apos;studyinsta&apos;));
+        ps.setString(3, $c(&apos;accessionn&apos;));
+        ps.setString(4, $c(&apos;co_patientid&apos;));
+        ps.setString(5, status);
+        ps.setString(6, description);
+        ps.executeUpdate();
+    } finally {
+        if (dbConn) {
+            dbConn.close();
+        }
+    }
+}
+</script>
+      </properties>
+      <transformer version="4.0.0">
+        <elements>
+          <com.mirth.connect.plugins.javascriptstep.JavaScriptStep version="4.0.0">
+            <name>Mapper</name>
+            <sequenceNumber>0</sequenceNumber>
+            <enabled>true</enabled>
+            <script>//mapear dado para o campo de Grupo. Valor padrão será o requestingservice
+//se for necessário utilizar outro dado para o Grupo, basta alterar no mapeamento abaixo
+$c(&apos;groupId&apos;, $c(&apos;na_requestingservice&apos;));</script>
+          </com.mirth.connect.plugins.javascriptstep.JavaScriptStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>token (out)</name>
+            <sequenceNumber>1</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;token&apos;]</messageSegment>
+            <mapping>$cfg(&apos;CV_TOKEN&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - studyId (out)</name>
+            <sequenceNumber>2</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;studyId&apos;]</messageSegment>
+            <mapping>$(&apos;studyinsta&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - studyInsta (out)</name>
+            <sequenceNumber>3</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;studyInsta&apos;]</messageSegment>
+            <mapping>$(&apos;studyinsta&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - studyDate (out)</name>
+            <sequenceNumber>4</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;studyDate&apos;]</messageSegment>
+            <mapping>$(&apos;studydate&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - accessionNumber (out)</name>
+            <sequenceNumber>5</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;accessionNumber&apos;]</messageSegment>
+            <mapping>$(&apos;accessionn&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - description (out)</name>
+            <sequenceNumber>6</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;description&apos;]</messageSegment>
+            <mapping>$(&apos;na_description&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - modality (out)</name>
+            <sequenceNumber>7</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;modality&apos;]</messageSegment>
+            <mapping>$(&apos;studymodal&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - healthPlanDesc (out)</name>
+            <sequenceNumber>8</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;healthPlanDesc&apos;]</messageSegment>
+            <mapping>$(&apos;na_insuranceplan&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - requesterPhysician - id (out)</name>
+            <sequenceNumber>9</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;requesterPhysician&apos;][&apos;id&apos;]</messageSegment>
+            <mapping>$(&apos;co_requesterid&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - requesterPhysician - name (out)</name>
+            <sequenceNumber>10</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;requesterPhysician&apos;][&apos;name&apos;]</messageSegment>
+            <mapping>$(&apos;na_requestername&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - requesterPhysician - email (out)</name>
+            <sequenceNumber>11</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;requesterPhysician&apos;][&apos;email&apos;]</messageSegment>
+            <mapping>$(&apos;na_requesteremail&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - requesterPhysician - phoneNumber (out)</name>
+            <sequenceNumber>12</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;requesterPhysician&apos;][&apos;phoneNumber&apos;]</messageSegment>
+            <mapping>$(&apos;na_requesterphone&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - requesterPhysician - crm - number (out)</name>
+            <sequenceNumber>13</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;requesterPhysician&apos;][&apos;crm&apos;][&apos;number&apos;]</messageSegment>
+            <mapping>$(&apos;na_requestercrm&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - requesterPhysician - crm - state (out)</name>
+            <sequenceNumber>14</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;requesterPhysician&apos;][&apos;crm&apos;][&apos;state&apos;]</messageSegment>
+            <mapping>$(&apos;na_requesteruf&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - performerPhysician - id (out)</name>
+            <sequenceNumber>15</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;performerPhysician&apos;][&apos;id&apos;]</messageSegment>
+            <mapping>$(&apos;co_performingid&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - performerPhysician - name (out)</name>
+            <sequenceNumber>16</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;performerPhysician&apos;][&apos;name&apos;]</messageSegment>
+            <mapping>$(&apos;na_performingname&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - performerPhysician - email (out)</name>
+            <sequenceNumber>17</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;performerPhysician&apos;][&apos;email&apos;]</messageSegment>
+            <mapping>$(&apos;na_performingemail&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - performerPhysician - phoneNumber (out)</name>
+            <sequenceNumber>18</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;performerPhysician&apos;][&apos;phoneNumber&apos;]</messageSegment>
+            <mapping>$(&apos;performerphysicianphonenumber&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - performerPhysician - crm - number (out)</name>
+            <sequenceNumber>19</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;performerPhysician&apos;][&apos;crm&apos;][&apos;number&apos;]</messageSegment>
+            <mapping>$(&apos;na_performingcrm&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - performerPhysician - crm - state (out)</name>
+            <sequenceNumber>20</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;performerPhysician&apos;][&apos;crm&apos;][&apos;state&apos;]</messageSegment>
+            <mapping>$(&apos;na_performinguf&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - protocol - identifier (out)</name>
+            <sequenceNumber>21</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;protocol&apos;][&apos;identifier&apos;]</messageSegment>
+            <mapping>$(&apos;protocolidentifier&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - protocol - password (out)</name>
+            <sequenceNumber>22</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;protocol&apos;][&apos;password&apos;]</messageSegment>
+            <mapping>$(&apos;na_clickvitawebpassword&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - report - type (out)</name>
+            <sequenceNumber>23</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;report&apos;][&apos;type&apos;]</messageSegment>
+            <mapping></mapping>
+            <defaultValue>&quot;PDF&quot;</defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - report - data (out)</name>
+            <sequenceNumber>24</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;report&apos;][&apos;data&apos;]</messageSegment>
+            <mapping>$(&apos;encodedContent&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - patient - id (out)</name>
+            <sequenceNumber>25</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;patient&apos;][&apos;id&apos;]</messageSegment>
+            <mapping>$(&apos;co_patientid&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - patient - name (out)</name>
+            <sequenceNumber>26</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;patient&apos;][&apos;name&apos;]</messageSegment>
+            <mapping>$(&apos;na_patientname&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - patient - gender (out)</name>
+            <sequenceNumber>27</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;patient&apos;][&apos;gender&apos;]</messageSegment>
+            <mapping>$(&apos;na_patientsex&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - patient - birthDate (out)</name>
+            <sequenceNumber>28</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;patient&apos;][&apos;birthDate&apos;]</messageSegment>
+            <mapping>$(&apos;na_patientbirthday&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - patient - document (out)</name>
+            <sequenceNumber>29</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;patient&apos;][&apos;document&apos;]</messageSegment>
+            <mapping>$(&apos;na_patientcpf&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - patient - email (out)</name>
+            <sequenceNumber>30</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;patient&apos;][&apos;email&apos;]</messageSegment>
+            <mapping>$(&apos;na_patientemail&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - patient - phoneNumber (out)</name>
+            <sequenceNumber>31</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;patient&apos;][&apos;phoneNumber&apos;]</messageSegment>
+            <mapping>$(&apos;na_patientphone&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+          <com.mirth.connect.plugins.messagebuilder.MessageBuilderStep version="4.0.0">
+            <name>study - groups - group - id (out)</name>
+            <sequenceNumber>32</sequenceNumber>
+            <enabled>true</enabled>
+            <messageSegment>tmp[&apos;study&apos;][&apos;groups&apos;][&apos;group&apos;][&apos;id&apos;]</messageSegment>
+            <mapping>$(&apos;groupId&apos;)</mapping>
+            <defaultValue></defaultValue>
+            <replacements/>
+          </com.mirth.connect.plugins.messagebuilder.MessageBuilderStep>
+        </elements>
+        <inboundTemplate encoding="base64">PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8cmVzdWx0Lz4NCg==</inboundTemplate>
+        <outboundTemplate encoding="base64">PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DTxhdXJvcmFNZXNzYWdlPgoJPHRva2VuPjwvdG9rZW4+Cgk8c3R1ZHk+CgkJPHN0dWR5SWQ+PC9zdHVkeUlkPgoJCTxzdHVkeUluc3RhPjwvc3R1ZHlJbnN0YT4KCQk8c3R1ZHlEYXRlPjwvc3R1ZHlEYXRlPgoJCTxhY2Nlc3Npb25OdW1iZXI+PC9hY2Nlc3Npb25OdW1iZXI+CgkJPGRlc2NyaXB0aW9uPjwvZGVzY3JpcHRpb24+CgkJPG1vZGFsaXR5PjwvbW9kYWxpdHk+CgkJPGhlYWx0aFBsYW5EZXNjPjwvaGVhbHRoUGxhbkRlc2M+CgkJPHJlcXVlc3RlclBoeXNpY2lhbj4KCQkJPGlkPjwvaWQ+IAoJCQk8bmFtZT48L25hbWU+CgkJCTxlbWFpbD48L2VtYWlsPgoJCQk8cGhvbmVOdW1iZXI+PC9waG9uZU51bWJlcj4KCQkJPGNybT4KCQkJCTxudW1iZXI+PC9udW1iZXI+CgkJCQk8c3RhdGU+PC9zdGF0ZT4KCQkJPC9jcm0+CgkJPC9yZXF1ZXN0ZXJQaHlzaWNpYW4+CgkJPHBlcmZvcm1lclBoeXNpY2lhbj4KCQkJPGlkPjwvaWQ+CgkJCTxuYW1lPjwvbmFtZT4KCQkJPGVtYWlsPjwvZW1haWw+CgkJCTxwaG9uZU51bWJlcj48L3Bob25lTnVtYmVyPgoJCQk8Y3JtPgoJCQkJPG51bWJlcj48L251bWJlcj4KCQkJCTxzdGF0ZT48L3N0YXRlPgoJCQk8L2NybT4KCQk8L3BlcmZvcm1lclBoeXNpY2lhbj4KCQk8cHJvdG9jb2w+CgkJCTxpZGVudGlmaWVyPjwvaWRlbnRpZmllcj4KCQkJPHBhc3N3b3JkPjwvcGFzc3dvcmQ+CgkJPC9wcm90b2NvbD4KCQkgPHJlcG9ydD4KICAgICAgICAgICAgICAgIDx0eXBlPjwvdHlwZT4KICAgICAgICAgICAgICAgIDxkYXRhPjwvZGF0YT4KICAgICAgICAgICA8L3JlcG9ydD4gCgkJPHBhdGllbnQ+CiAgICAgICAgICAgPGlkPjwvaWQ+CiAgICAgICAgICAgPG5hbWU+PC9uYW1lPgogICAgICAgICAgIDxnZW5kZXI+PC9nZW5kZXI+CiAgICAgICAgICAgPGJpcnRoRGF0ZT48L2JpcnRoRGF0ZT4KICAgICAgICAgICA8ZG9jdW1lbnQ+PC9kb2N1bWVudD4KICAgICAgICAgICA8ZW1haWw+PC9lbWFpbD4KICAgICAgICAgICA8cGhvbmVOdW1iZXI+PC9waG9uZU51bWJlcj4KICAgICAgIDwvcGF0aWVudD4JCgk8L3N0dWR5Pgo8L2F1cm9yYU1lc3NhZ2U+</outboundTemplate>
+        <inboundDataType>XML</inboundDataType>
+        <outboundDataType>XML</outboundDataType>
+        <inboundProperties class="com.mirth.connect.plugins.datatypes.xml.XMLDataTypeProperties" version="4.0.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.xml.XMLSerializationProperties" version="4.0.0">
+            <stripNamespaces>true</stripNamespaces>
+          </serializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.xml.XMLBatchProperties" version="4.0.0">
+            <splitType>Element_Name</splitType>
+            <elementName></elementName>
+            <level>1</level>
+            <query></query>
+            <batchScript></batchScript>
+          </batchProperties>
+        </inboundProperties>
+        <outboundProperties class="com.mirth.connect.plugins.datatypes.xml.XMLDataTypeProperties" version="4.0.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.xml.XMLSerializationProperties" version="4.0.0">
+            <stripNamespaces>true</stripNamespaces>
+          </serializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.xml.XMLBatchProperties" version="4.0.0">
+            <splitType>Element_Name</splitType>
+            <elementName></elementName>
+            <level>1</level>
+            <query></query>
+            <batchScript></batchScript>
+          </batchProperties>
+        </outboundProperties>
+      </transformer>
+      <responseTransformer version="4.0.0">
+        <elements/>
+        <inboundDataType>XML</inboundDataType>
+        <outboundDataType>XML</outboundDataType>
+        <inboundProperties class="com.mirth.connect.plugins.datatypes.xml.XMLDataTypeProperties" version="4.0.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.xml.XMLSerializationProperties" version="4.0.0">
+            <stripNamespaces>true</stripNamespaces>
+          </serializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.xml.XMLBatchProperties" version="4.0.0">
+            <splitType>Element_Name</splitType>
+            <elementName></elementName>
+            <level>1</level>
+            <query></query>
+            <batchScript></batchScript>
+          </batchProperties>
+        </inboundProperties>
+        <outboundProperties class="com.mirth.connect.plugins.datatypes.xml.XMLDataTypeProperties" version="4.0.0">
+          <serializationProperties class="com.mirth.connect.plugins.datatypes.xml.XMLSerializationProperties" version="4.0.0">
+            <stripNamespaces>true</stripNamespaces>
+          </serializationProperties>
+          <batchProperties class="com.mirth.connect.plugins.datatypes.xml.XMLBatchProperties" version="4.0.0">
+            <splitType>Element_Name</splitType>
+            <elementName></elementName>
+            <level>1</level>
+            <query></query>
+            <batchScript></batchScript>
+          </batchProperties>
+        </outboundProperties>
+      </responseTransformer>
+      <filter version="4.0.0">
+        <elements/>
+      </filter>
+      <transportName>JavaScript Writer</transportName>
+      <mode>DESTINATION</mode>
+      <enabled>true</enabled>
+      <waitForPrevious>true</waitForPrevious>
+    </connector>
+  </destinationConnectors>
+  <preprocessingScript>$c(&apos;startDate&apos;, DateUtil.getCurrentDate(&apos;yyyyMMddHHmmss&apos;));
+return message;</preprocessingScript>
+  <postprocessingScript>return;</postprocessingScript>
+  <deployScript>//
+var clickvitaKeys = {
+    &apos;CV_HOST_ADDRESS&apos;: $cfg(&apos;CV_HOST_ADDRESS&apos;),
+    &apos;CV_HTTP_PROTOCOL&apos;: $cfg(&apos;CV_HTTP_PROTOCOL&apos;),
+    &apos;CV_IAN_INIT_DATE&apos;: $cfg(&apos;CV_IAN_INIT_DATE&apos;),
+    &apos;CV_IAN_LIST_MODALITY&apos;: $cfg(&apos;CV_LIST_MODALITY&apos;),
+    &apos;CV_PREFIX&apos;: $cfg(&apos;CV_PREFIX&apos;),
+    &apos;CV_RESOURCE_PATH&apos;: $cfg(&apos;CV_RESOURCE_PATH&apos;),
+    &apos;CV_TOKEN&apos;: $cfg(&apos;CV_TOKEN&apos;),
+    };
+
+var keyMissing = any(clickvitaKeys, &apos;&apos;);
+if (keyMissing != false) {
+    logger.error(&apos;[&apos; + channelName + &apos;] Configure a variável &apos; + keyMissing + &apos; para o correto funcionamento do canal.&apos;);
+    throw new Error(&apos;Missing key: &apos; + keyMissing);
+}
+
+var mirthPath = new java.io.File(&apos;.&apos;).getCanonicalPath();
+var templatePath = new java.io.File(mirthPath + &apos;/pixeon/clickvitaTemplateIAN/CLICKVITA-TEMPLATE.pdf&apos;);
+//mude o nome do arquivo PDF definido em templatePath caso deseje utilizar outro modelo de template
+
+$gc(&apos;mirthPath&apos;, mirthPath);
+$gc(&apos;templatePath&apos;, templatePath);
+
+return;</deployScript>
+  <undeployScript>//
+return;
+
+</undeployScript>
+  <properties version="4.0.0">
+    <clearGlobalChannelMap>true</clearGlobalChannelMap>
+    <messageStorageMode>DISABLED</messageStorageMode>
+    <encryptData>false</encryptData>
+    <removeContentOnCompletion>false</removeContentOnCompletion>
+    <removeOnlyFilteredOnCompletion>false</removeOnlyFilteredOnCompletion>
+    <removeAttachmentsOnCompletion>false</removeAttachmentsOnCompletion>
+    <initialState>STOPPED</initialState>
+    <storeAttachments>false</storeAttachments>
+    <metaDataColumns>
+      <metaDataColumn>
+        <name>SOURCE</name>
+        <type>STRING</type>
+        <mappingName>mirth_source</mappingName>
+      </metaDataColumn>
+      <metaDataColumn>
+        <name>TYPE</name>
+        <type>STRING</type>
+        <mappingName>mirth_type</mappingName>
+      </metaDataColumn>
+    </metaDataColumns>
+    <attachmentProperties version="4.0.0">
+      <type>None</type>
+      <properties/>
+    </attachmentProperties>
+    <resourceIds class="linked-hash-map">
+      <entry>
+        <string>Default Resource</string>
+        <string>[Default Resource]</string>
+      </entry>
+    </resourceIds>
+  </properties>
+  <exportData>
+    <metadata>
+      <enabled>true</enabled>
+      <lastModified>
+        <time>1717156136846</time>
+        <timezone>America/Sao_Paulo</timezone>
+      </lastModified>
+      <pruningSettings>
+        <pruneMetaDataDays>1</pruneMetaDataDays>
+        <pruneContentDays>1</pruneContentDays>
+        <archiveEnabled>false</archiveEnabled>
+        <pruneErroredMessages>false</pruneErroredMessages>
+      </pruningSettings>
+    </metadata>
+    <channelTags>
+      <channelTag>
+        <id>2837b7e8-4568-477a-91d0-ed98b1ff2f96</id>
+        <name>Padrao</name>
+        <channelIds>
+          <string>31d07a79-84c3-4303-a881-dc460f0dcb41</string>
+          <string>c6484855-ad14-44bb-be33-15e4cea22a29</string>
+          <string>9f2c89b2-3b8a-45f4-9fa3-f7975c180ae7</string>
+          <string>68a67a5e-61c9-4ce9-9dfd-46eebe5d6a6e</string>
+          <string>72402449-57b1-4a3c-adf8-a7a085961a3a</string>
+          <string>07220c81-b462-4252-b279-8acdcfd1776f</string>
+          <string>1a872e89-b8dd-41d1-91f6-78f6b52b93b0</string>
+        </channelIds>
+        <backgroundColor>
+          <red>0</red>
+          <green>153</green>
+          <blue>51</blue>
+          <alpha>255</alpha>
+        </backgroundColor>
+      </channelTag>
+    </channelTags>
+  </exportData>
+</channel>
